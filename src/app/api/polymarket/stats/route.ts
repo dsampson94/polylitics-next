@@ -81,12 +81,12 @@ export async function GET() {
         deadlineMarkets,
         recentSnapshots,
       },
-      topCategories: topCategories.map(c => ({
+      topCategories: topCategories.map((c: any) => ({
         category: c.category || "Unknown",
         count: c._count,
       })),
       recentScores,
-      recentAlerts: recentAlerts.map(a => ({
+      recentAlerts: recentAlerts.map((a: any) => ({
         id: a.id,
         type: a.alertType,
         message: a.message,

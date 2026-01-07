@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     });
 
     const scored = markets
-      .map(market => {
+      .map((market: any) => {
         const snapshot = market.snapshots[0];
         return scoreDeadlineMarket({
           id: market.id,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           liquidity: snapshot?.liquidity ?? null,
         });
       })
-      .filter((s): s is NonNullable<typeof s> => s !== null);
+      .filter((s: any): s is NonNullable<typeof s> => s !== null);
 
     const filtered = filterByEdge(scored, minEdge);
     const ranked = rankByEdge(filtered).slice(0, limit);

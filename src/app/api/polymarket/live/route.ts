@@ -37,8 +37,8 @@ interface GammaMarket {
 
 // Calculate market statistics for relative scoring
 function calculateStats(markets: { volume24h: number; liquidity: number }[]) {
-  const volumes = markets.map(m => m.volume24h).filter(v => v > 0).sort((a, b) => a - b);
-  const liquidities = markets.map(m => m.liquidity).filter(l => l > 0).sort((a, b) => a - b);
+  const volumes = markets.map((m: any) => m.volume24h).filter((v: any) => v > 0).sort((a: any, b: any) => a - b);
+  const liquidities = markets.map((m: any) => m.liquidity).filter((l: any) => l > 0).sort((a: any, b: any) => a - b);
   
   const median = (arr: number[]) => arr.length ? arr[Math.floor(arr.length / 2)] : 0;
   const percentile = (arr: number[], p: number) => arr.length ? arr[Math.floor(arr.length * p)] : 0;
@@ -71,8 +71,8 @@ export async function GET(req: Request) {
     
     // First pass: parse basic data
     const parsedMarkets = rawMarkets
-      .filter(m => m.active && !m.closed)
-      .map(m => {
+      .filter((m: any) => m.active && !m.closed)
+      .map((m: any) => {
         let yesPrice = 0.5;
         let noPrice = 0.5;
         try {
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
         };
       })
       // CRITICAL: Filter out expired and resolved markets
-      .filter(m => {
+      .filter((m: any) => {
         // Exclude expired markets (negative days)
         if (m.daysToEnd !== null && m.daysToEnd < 0) return false;
         // Exclude essentially resolved markets (price < 5¢ or > 95¢)
@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     const stats = calculateStats(parsedMarkets);
     
     // Second pass: score markets
-    const markets = parsedMarkets.map(m => {
+    const markets = parsedMarkets.map((m: any) => {
       const { yesPrice, noPrice, volume24h, liquidity, daysToEnd } = m;
       
       // ===== TRADEABLE EDGE CALCULATION =====
@@ -256,15 +256,15 @@ export async function GET(req: Request) {
     const overallStats = {
       totalMarkets: markets.length,
       activeMarkets: markets.length,
-      byDateMarkets: markets.filter(m => m.endDate).length,
+      byDateMarkets: markets.filter((m: any) => m.endDate).length,
       avgVolume: markets.reduce((s, m) => s + m.volume24h, 0) / (markets.length || 1),
       avgLiquidity: markets.reduce((s, m) => s + m.liquidity, 0) / (markets.length || 1),
       tierCounts: {
-        S: markets.filter(m => m.tier === "S").length,
-        A: markets.filter(m => m.tier === "A").length,
-        B: markets.filter(m => m.tier === "B").length,
-        C: markets.filter(m => m.tier === "C").length,
-        D: markets.filter(m => m.tier === "D").length,
+        S: markets.filter((m: any) => m.tier === "S").length,
+        A: markets.filter((m: any) => m.tier === "A").length,
+        B: markets.filter((m: any) => m.tier === "B").length,
+        C: markets.filter((m: any) => m.tier === "C").length,
+        D: markets.filter((m: any) => m.tier === "D").length,
       },
     };
 

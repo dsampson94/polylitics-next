@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         rules: market.rules,
         category: market.category,
         endDate: market.endDate,
-        snapshots: market.snapshots.map(s => ({
+        snapshots: market.snapshots.map((s: any) => ({
           capturedAt: s.capturedAt,
           yesPrice: s.yesPrice,
           noPrice: s.noPrice,
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply filters
-    let filtered = scored.filter(s => s.compositeScore >= minScore);
+    let filtered = scored.filter((s: any) => s.compositeScore >= minScore);
     
     if (tier) {
       filtered = filtered.filter(s => s.tier === tier);

@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate P&L for each item
-    const enriched = watchlists.map(wl => ({
+    const enriched = watchlists.map((wl: any) => ({
       ...wl,
-      items: wl.items.map(item => {
+      items: wl.items.map((item: any) => {
         const currentPrice = item.market.snapshots[0]?.yesPrice ?? 0;
         const entryPrice = item.entryPrice ?? 0;
         const pnl = entryPrice > 0 ? currentPrice - entryPrice : 0;
