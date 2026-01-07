@@ -12,6 +12,7 @@ interface AnalysisRequest {
   noPrice: number;
   volume24h: number;
   volumeZScore: number;
+  liquidity?: number;
   daysToEnd: number | null;
   tier: string;
   edge: number;
