@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     });
 
     const filtered = urgency
-      ? withDeadlines.filter(m => m.urgency === urgency)
+      ? withDeadlines.filter((m: any) => m.urgency === urgency)
       : withDeadlines;
 
     return NextResponse.json({
