@@ -1,0 +1,131 @@
+// Polylitics - Polymarket Analytics Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Market {
+  id            String    @id
+  conditionId   String?
+  slug          String?
+  title         String
+  description   String?   @db.Text
+  rules         String?   @db.Text
+  category      String?
+  endDate       DateTime?
+  resolvedAt    DateTime?
+  outcome       String?
+  active        Boolean   @default(true)
+  closed        Boolean   @default(false)
+  isByDate      Boolean   @default(false)
+  isDeadline    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  snapshots      MarketSnapshot[]
+  alerts         Alert[]
+  watchlistItems WatchlistItem[]
+
+  @@index([category])
+  @@index([endDate])
+  @@index([active])
+  @@index([isByDate])
+}
+
+model MarketSnapshot {
+  id             String   @id @default(uuid())
+  marketId       String
+  capturedAt     DateTime @default(now())
+  yesPrice       Float?
+  noPrice        Float?
+  volume24h      Float?
+  liquidity      Float?
+  priceChange1h  Float?
+  priceChange24h Float?
+  volumeSpike    Float?
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId, capturedAt])
+  @@index([capturedAt])
+}
+
+model MarketScore {
+  id                String   @id @default(uuid())
+  marketId          String
+  scoredAt          DateTime @default(now())
+  marketProb        Float
+  modelProb         Float
+  edge              Float
+  timeRemainingDays Float?
+  delayRisk         Float?
+  attentionScore    Float?
+  volumeZScore      Float?
+  rationale         String[]
+
+  @@index([marketId, scoredAt])
+  @@index([edge])
+}
+
+model Alert {
+  id              String    @id @default(uuid())
+  marketId        String
+  alertType       AlertType
+  message         String
+  triggered       Boolean   @default(false)
+  triggeredAt     DateTime?
+  priceThreshold  Float?
+  volumeThreshold Float?
+  edgeThreshold   Float?
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@index([active, triggered])
+}
+
+model Watchlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  filters     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items WatchlistItem[]
+}
+
+model WatchlistItem {
+  id          String    @id @default(uuid())
+  watchlistId String
+  marketId    String
+  notes       String?
+  entryPrice  Float?
+  entryDate   DateTime?
+  targetPrice Float?
+  stopPrice   Float?
+  addedAt     DateTime  @default(now())
+
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  market    Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, marketId])
+  @@index([watchlistId])
+  @@index([marketId])
+}
+
+enum AlertType {
+  PRICE_SPIKE
+  VOLUME_SPIKE
+  EDGE_THRESHOLD
+  DEADLINE_APPROACHING
+  ATTENTION_SIGNAL
+}

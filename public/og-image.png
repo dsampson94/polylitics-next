@@ -1,0 +1,54 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="1200" height="630" fill="#0d0d0f"/>
+  
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1f" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff9f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00b8ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.3"/>
+  
+  <!-- Logo -->
+  <rect x="100" y="215" width="200" height="200" rx="12" fill="#0d0d0f" stroke="url(#grad)" stroke-width="3"/>
+  <rect x="130" y="280" width="20" height="70" fill="url(#grad)" filter="url(#glow)"/>
+  <rect x="150" y="280" width="35" height="20" fill="url(#grad)" filter="url(#glow)"/>
+  <rect x="185" y="280" width="20" height="35" fill="url(#grad)" filter="url(#glow)"/>
+  <rect x="150" y="300" width="35" height="20" fill="url(#grad)" filter="url(#glow)"/>
+  <rect x="220" y="320" width="15" height="30" fill="#00d4ff" filter="url(#glow)"/>
+  <rect x="240" y="305" width="15" height="45" fill="#00b8ff" filter="url(#glow)"/>
+  <rect x="260" y="310" width="15" height="40" fill="#00ff9f" filter="url(#glow)"/>
+  
+  <!-- Title -->
+  <text x="350" y="280" font-family="monospace" font-size="72" font-weight="bold" fill="url(#grad)" filter="url(#glow)">POLYLITICS</text>
+  <text x="350" y="340" font-family="monospace" font-size="36" fill="#e8e8e8" opacity="0.8">// MARKET INTELLIGENCE</text>
+  <text x="350" y="390" font-family="monospace" font-size="24" fill="#00ff9f" opacity="0.6">Dark Analytics Terminal for Prediction Markets</text>
+  
+  <!-- Decorative elements -->
+  <line x1="350" y1="410" x2="900" y2="410" stroke="url(#grad)" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Data visualization bars -->
+  <rect x="950" y="350" width="30" height="80" fill="#00ff9f" opacity="0.3"/>
+  <rect x="990" y="300" width="30" height="130" fill="#00d4ff" opacity="0.3"/>
+  <rect x="1030" y="250" width="30" height="180" fill="#00b8ff" opacity="0.3"/>
+  <rect x="1070" y="280" width="30" height="150" fill="#00ff9f" opacity="0.3"/>
+  
+  <!-- Corner accents -->
+  <path d="M 50 50 L 100 50 L 100 55 L 55 55 L 55 100 L 50 100 Z" fill="#00ff9f" opacity="0.5"/>
+  <path d="M 1150 50 L 1100 50 L 1100 55 L 1145 55 L 1145 100 L 1150 100 Z" fill="#00ff9f" opacity="0.5"/>
+  <path d="M 50 580 L 100 580 L 100 575 L 55 575 L 55 530 L 50 530 Z" fill="#00ff9f" opacity="0.5"/>
+  <path d="M 1150 580 L 1100 580 L 1100 575 L 1145 575 L 1145 530 L 1150 530 Z" fill="#00ff9f" opacity="0.5"/>
+</svg>

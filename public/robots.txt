@@ -1,0 +1,19 @@
+# *
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: http://localhost:3000/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1
+
+# Disallow admin/api routes
+User-agent: *
+Disallow: /api/
+
+# Block bad bots
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+Disallow: /
