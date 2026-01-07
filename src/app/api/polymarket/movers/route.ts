@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
     });
 
     const scored = markets
-      .map(market => scoreMovingMarket(market))
+      .map((market: any) => scoreMovingMarket(market))
       .filter((m): m is NonNullable<typeof m> => m !== null)
-      .filter(m => (m.attentionScore ?? 0) >= minAttention);
+      .filter((m: any) => (m.attentionScore ?? 0) >= minAttention);
 
     const ranked = rankByAttention(scored).slice(0, limit);
 
