@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       orderBy: { endDate: "asc" },
     });
 
-    const withDeadlines = markets.map(market => {
+    const withDeadlines = markets.map((market: any) => {
       const daysRemaining = timeRemainingDays(market.endDate);
       const urgencyLevel = deadlineUrgency(daysRemaining);
       const snapshot = market.snapshots[0];
