@@ -355,7 +355,7 @@ function generateRiskAssessment(
     level = "HIGH";
   }
   
-  if (liquidity < 30000) {
+  if (liquidity && liquidity < 30000) {
     factors.push("🟡 Low liquidity - potential slippage on entry/exit");
     mitigations.push("Use limit orders exclusively, size down 50%");
   }
