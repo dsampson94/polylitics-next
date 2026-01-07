@@ -101,10 +101,10 @@ export async function POST(request: NextRequest) {
           const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
           const snapshot1h = recentSnapshots.find(
-            s => s.capturedAt <= oneHourAgo && s.yesPrice !== null
+            (s: any) => s.capturedAt <= oneHourAgo && s.yesPrice !== null
           );
           const snapshot24h = recentSnapshots.find(
-            s => s.capturedAt <= oneDayAgo && s.yesPrice !== null
+            (s: any) => s.capturedAt <= oneDayAgo && s.yesPrice !== null
           );
 
           if (snapshot1h && snapshot1h.yesPrice && price.yesPrice !== null && price.yesPrice !== undefined) {
