@@ -12,6 +12,10 @@
 
 import { NextResponse } from "next/server";
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const GAMMA_API = "https://gamma-api.polymarket.com";
 
 interface GammaMarket {
@@ -54,24 +58,49 @@ function calculateStats(markets: { volume24h: number; liquidity: number }[]) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const limit = parseInt(searchParams.get("limit") || "200");
+  const userLimit = parseInt(searchParams.get("limit") || "2000");
   
   try {
-    // Fetch markets from Polymarket
-    const res = await fetch(`${GAMMA_API}/markets?limit=${limit}&active=true&closed=false`, {
-      cache: "no-store",
-      headers: { "Accept": "application/json" },
-    });
-
-    if (!res.ok) {
-      throw new Error(`API error: ${res.status}`);
-    }
-
-    const rawMarkets: GammaMarket[] = await res.json();
+    // Fetch ALL markets from Polymarket using the EVENTS endpoint (better than markets)
+    let allRawMarkets: GammaMarket[] = [];
+    let offset = 0;
+    const batchSize = 100;
+    const maxBatches = 20; // Fetch up to 2000 markets (20 batches of 100)
     
-    // First pass: parse basic data
+    for (let i = 0; i < maxBatches; i++) {
+      const res = await fetch(
+        `${GAMMA_API}/markets?closed=false&limit=${batchSize}&offset=${offset}`,
+        {
+          cache: "no-store",
+          headers: { "Accept": "application/json" },
+        }
+      );
+
+      if (!res.ok) {
+        console.error(`API error at offset ${offset}: ${res.status}`);
+        break;
+      }
+
+      const batch: GammaMarket[] = await res.json();
+      if (batch.length === 0) break; // No more markets
+      
+      allRawMarkets = allRawMarkets.concat(batch);
+      offset += batchSize;
+      
+      // If we got less than batchSize, we've reached the end
+      if (batch.length < batchSize) break;
+    }
+    
+    console.log(`Fetched ${allRawMarkets.length} markets from Polymarket`);
+    const rawMarkets = allRawMarkets;
+    
+    // Debug: Check how many markets pass each filter
+    const activeCount = rawMarkets.filter((m: any) => !m.closed).length;
+    console.log(`After closed filter: ${activeCount} markets`);
+    
+    // First pass: parse basic data - only filter out CLOSED markets
     const parsedMarkets = rawMarkets
-      .filter((m: any) => m.active && !m.closed)
+      .filter((m: any) => !m.closed)
       .map((m: any) => {
         let yesPrice = 0.5;
         let noPrice = 0.5;
@@ -104,16 +133,17 @@ export async function GET(req: Request) {
           updatedAt: m.updatedAt,
         };
       })
-      // CRITICAL: Filter out expired and resolved markets
+      // CRITICAL: Filter out expired and resolved markets - be VERY permissive
       .filter((m: any) => {
         // Exclude expired markets (negative days)
-        if (m.daysToEnd !== null && m.daysToEnd < 0) return false;
-        // Exclude essentially resolved markets (price < 5¢ or > 95¢)
-        if (m.yesPrice < 0.05 || m.yesPrice > 0.95) return false;
-        // Exclude zero liquidity markets
-        if (m.liquidity < 100) return false;
+        if (m.daysToEnd !== null && m.daysToEnd < -7) return false;
+        // Keep ALL price ranges - let the scoring handle it
+        // Only exclude zero liquidity
+        if (m.liquidity <= 0) return false;
         return true;
       });
+    
+    console.log(`After filtering: ${parsedMarkets.length} markets`);
     
     // Calculate relative stats for scoring
     const stats = calculateStats(parsedMarkets);
@@ -268,16 +298,16 @@ export async function GET(req: Request) {
       },
     };
 
-    // Top opportunities (S and A tier with actual signals)
+    // Top opportunities (S, A, and B tier with actual signals)
     const opportunities = markets
-      .filter(m => (m.tier === "S" || m.tier === "A") && m.primarySignal)
-      .slice(0, 15);
+      .filter(m => (m.tier === "S" || m.tier === "A" || m.tier === "B") && m.primarySignal)
+      .slice(0, 50);
     
     // Top movers (highest volume with real activity)
     const movers = [...markets]
       .filter(m => m.volume24h > 0)
       .sort((a, b) => b.volume24h - a.volume24h)
-      .slice(0, 10)
+      .slice(0, 30)
       .map(m => ({
         ...m,
         volumeRank: markets.filter(x => x.volume24h > m.volume24h).length + 1,
@@ -285,9 +315,9 @@ export async function GET(req: Request) {
     
     // Deadline markets (actually upcoming, not expired)
     const deadlines = markets
-      .filter(m => m.daysToEnd !== null && m.daysToEnd > 0 && m.daysToEnd <= 60)
+      .filter(m => m.daysToEnd !== null && m.daysToEnd > 0 && m.daysToEnd <= 90)
       .sort((a, b) => (a.daysToEnd ?? 999) - (b.daysToEnd ?? 999))
-      .slice(0, 10);
+      .slice(0, 30);
 
     // Categories
     const categoryCount: Record<string, number> = {};
@@ -305,8 +335,14 @@ export async function GET(req: Request) {
       movers,
       deadlines,
       topCategories,
-      markets: markets.slice(0, 100),
+      markets: markets.slice(0, 500), // Return way more markets
       fetchedAt: new Date().toISOString(),
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
   } catch (error) {
     console.error("Live API error:", error);

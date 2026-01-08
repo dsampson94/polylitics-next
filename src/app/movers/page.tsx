@@ -23,14 +23,19 @@ export default function MoversPage() {
   const [movers, setMovers] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetch, setLastFetch] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/polymarket/live?limit=200", { cache: "no-store" });
+      const res = await fetch("/api/polymarket/live?limit=2000", {
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setMovers(data.movers || []);
+      setLastFetch(data.fetchedAt || new Date().toISOString());
       setError(null);
     } catch (err) {
       setError(String(err));
@@ -41,6 +46,8 @@ export default function MoversPage() {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const volumeSpikes = movers.filter(m => m.volumeZScore >= 2);

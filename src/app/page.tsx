@@ -54,7 +54,10 @@ export default function CommandCenter() {
       setLoading(true);
       setError(null);
       
-      const res = await fetch("/api/polymarket/live?limit=200", { cache: "no-store" });
+      const res = await fetch("/api/polymarket/live?limit=2000", { 
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`);

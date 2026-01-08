@@ -26,16 +26,21 @@ export default function ScannerPage() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetch, setLastFetch] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<'volume' | 'edge' | 'score'>('volume');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/polymarket/live?limit=200", { cache: "no-store" });
+      const res = await fetch("/api/polymarket/live?limit=2000", {
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setMarkets(data.markets || []);
+      setLastFetch(data.fetchedAt || new Date().toISOString());
       setError(null);
     } catch (err) {
       setError(String(err));
@@ -46,6 +51,8 @@ export default function ScannerPage() {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filter & sort

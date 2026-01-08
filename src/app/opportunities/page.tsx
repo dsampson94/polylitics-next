@@ -32,6 +32,7 @@ export default function OpportunitiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Market | null>(null);
+  const [lastFetch, setLastFetch] = useState<string | null>(null);
   
   // Filters
   const [tierFilter, setTierFilter] = useState<string | null>(null);
@@ -42,17 +43,21 @@ export default function OpportunitiesPage() {
       setLoading(true);
       setError(null);
       
-      const res = await fetch("/api/polymarket/live?limit=200", { cache: "no-store" });
+      const res = await fetch("/api/polymarket/live?limit=2000", {
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!res.ok) throw new Error("API error");
       
       const data = await res.json();
+      setLastFetch(data.fetchedAt || new Date().toISOString());
       
-      // Filter to just S and A tier by default, but show all if filtered
+      // Show way more opportunities - include S, A, B tier or score > 15
       let opps = data.opportunities || [];
       
-      // Add all markets with scores > 0 if no tier filter
+      // Add all markets with scores > 15 if no tier filter
       if (!tierFilter) {
-        opps = (data.markets || []).filter((m: Market) => m.compositeScore > 20);
+        opps = (data.markets || []).filter((m: Market) => m.compositeScore > 15);
       }
       
       setOpportunities(opps);
@@ -65,6 +70,9 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     fetchData();
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Apply filters
@@ -90,7 +98,10 @@ export default function OpportunitiesPage() {
               <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a]">←</Link>
               <div>
                 <h1 className="text-lg tracking-wide text-[#e0e0e8]">OPPORTUNITIES</h1>
-                <p className="text-xs text-[#4a4a5a]">multi-signal edge detection</p>
+                <p className="text-xs text-[#4a4a5a]">
+                  multi-signal edge detection · live data
+                  {lastFetch && ` · updated ${new Date(lastFetch).toLocaleTimeString()}`}
+                </p>
               </div>
             </div>
             <button

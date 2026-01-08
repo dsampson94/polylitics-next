@@ -26,15 +26,20 @@ export default function DeadlinesPage() {
   const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetch, setLastFetch] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/polymarket/live?limit=200", { cache: "no-store" });
+      const res = await fetch("/api/polymarket/live?limit=2000", {
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setDeadlines(data.deadlines || []);
+      setLastFetch(data.fetchedAt || new Date().toISOString());
       // Also get all markets with deadlines
       const marketsWithDeadlines = (data.markets || [])
         .filter((m: Market) => m.daysToEnd !== null && m.daysToEnd > 0)
