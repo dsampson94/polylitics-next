@@ -40,21 +40,33 @@ interface LiveData {
   movers: Market[];
   deadlines: Market[];
   topCategories: { category: string; count: number }[];
+  allCategories?: string[];
   fetchedAt: string;
 }
+
+// Default categories to exclude (user can toggle)
+const SPORTS_CATEGORIES = ["Sports", "NBA", "NFL", "NHL", "MLB", "Soccer", "Football"];
 
 export default function CommandCenter() {
   const [data, setData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [excludedCategories, setExcludedCategories] = useState<string[]>(SPORTS_CATEGORIES);
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchLiveData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const res = await fetch("/api/polymarket/live?limit=2000", { 
+      // Build URL with category filters
+      const params = new URLSearchParams({ limit: "2000" });
+      if (excludedCategories.length > 0) {
+        params.set("excludeCategories", excludedCategories.join(","));
+      }
+      
+      const res = await fetch(`/api/polymarket/live?${params.toString()}`, { 
         cache: "no-store",
         headers: { 'Cache-Control': 'no-cache' }
       });
@@ -78,7 +90,13 @@ export default function CommandCenter() {
     fetchLiveData();
     const interval = setInterval(fetchLiveData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [excludedCategories]); // Re-fetch when filter changes
+
+  const toggleCategory = (cat: string) => {
+    setExcludedCategories(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
 
   const sTier = data?.opportunities.filter(o => o.tier === "S") ?? [];
   const aTier = data?.opportunities.filter(o => o.tier === "A") ?? [];
@@ -110,6 +128,16 @@ export default function CommandCenter() {
                 {lastUpdated?.toLocaleTimeString('en-US', { hour12: false }) || '--:--:--'}
               </span>
               <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-3 py-1.5 text-xs border rounded transition-all
+                         ${excludedCategories.length > 0 
+                           ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' 
+                           : 'bg-[#252530] border-[#404055] text-[#d0d0e0]'}
+                         hover:bg-[#303040] hover:border-[#505065]`}
+              >
+                ◇ FILTERS {excludedCategories.length > 0 && `(${excludedCategories.length})`}
+              </button>
+              <button
                 onClick={fetchLiveData}
                 disabled={loading}
                 className="px-3 py-1.5 text-xs bg-[#252530] border border-[#404055] rounded 
@@ -126,6 +154,39 @@ export default function CommandCenter() {
               </div>
             </div>
           </div>
+          
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="mt-3 p-4 bg-[#1d1e28] border border-[#404055] rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-[#8a8a9a] uppercase tracking-wider">Hide Categories</span>
+                <button 
+                  onClick={() => setExcludedCategories([])}
+                  className="text-xs text-cyan-400 hover:text-cyan-300"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["Sports", "NBA", "NFL", "NHL", "Soccer", "Politics", "Crypto", "World", "Tech", "Finance", "Breaking", "Other"].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => toggleCategory(cat)}
+                    className={`px-3 py-1.5 text-xs rounded border transition-all ${
+                      excludedCategories.includes(cat)
+                        ? 'bg-red-900/30 border-red-600 text-red-400 line-through'
+                        : 'bg-[#252530] border-[#404055] text-[#d0d0e0] hover:border-cyan-600'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-[#6a6a7a]">
+                Clicked categories will be hidden from results. Sports are hidden by default.
+              </p>
+            </div>
+          )}
         </div>
       </header>
 

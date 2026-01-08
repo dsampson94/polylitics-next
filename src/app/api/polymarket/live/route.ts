@@ -18,6 +18,19 @@ export const revalidate = 0;
 
 const GAMMA_API = "https://gamma-api.polymarket.com";
 
+// Categories to fetch from Polymarket
+const CATEGORIES = [
+  "politics",
+  "sports", 
+  "crypto",
+  "pop-culture",
+  "business",
+  "science",
+  "world",
+  "tech",
+  "breaking",
+];
+
 interface GammaMarket {
   id: string;
   question: string;
@@ -33,6 +46,7 @@ interface GammaMarket {
   createdAt: string;
   updatedAt: string;
   category?: string;
+  groupItemTitle?: string;
   tags?: string[];
   spread?: number;
   slug?: string;
@@ -60,38 +74,83 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const userLimit = parseInt(searchParams.get("limit") || "2000");
   
+  // Category filtering - allow excluding categories
+  const excludeCategories = searchParams.get("excludeCategories")?.split(",") || [];
+  const includeCategories = searchParams.get("includeCategories")?.split(",") || [];
+  
   try {
-    // Fetch ALL markets from Polymarket using the EVENTS endpoint (better than markets)
-    let allRawMarkets: GammaMarket[] = [];
-    let offset = 0;
-    const batchSize = 100;
-    const maxBatches = 20; // Fetch up to 2000 markets (20 batches of 100)
-    
-    for (let i = 0; i < maxBatches; i++) {
-      const res = await fetch(
-        `${GAMMA_API}/markets?closed=false&limit=${batchSize}&offset=${offset}`,
-        {
-          cache: "no-store",
-          headers: { "Accept": "application/json" },
-        }
-      );
-
-      if (!res.ok) {
-        console.error(`API error at offset ${offset}: ${res.status}`);
-        break;
+    // Fetch markets from ALL categories in parallel for maximum coverage
+    const categoryPromises = CATEGORIES.map(async (category) => {
+      try {
+        const res = await fetch(
+          `${GAMMA_API}/markets?closed=false&limit=500&tag=${category}`,
+          {
+            cache: "no-store",
+            headers: { "Accept": "application/json" },
+          }
+        );
+        if (!res.ok) return [];
+        const markets: GammaMarket[] = await res.json();
+        // Tag each market with its category
+        return markets.map(m => ({ ...m, fetchedCategory: category }));
+      } catch {
+        return [];
       }
-
-      const batch: GammaMarket[] = await res.json();
-      if (batch.length === 0) break; // No more markets
-      
-      allRawMarkets = allRawMarkets.concat(batch);
-      offset += batchSize;
-      
-      // If we got less than batchSize, we've reached the end
-      if (batch.length < batchSize) break;
-    }
+    });
     
-    console.log(`Fetched ${allRawMarkets.length} markets from Polymarket`);
+    // Also fetch without category filter for general markets
+    const generalPromise = (async () => {
+      try {
+        let allGeneral: GammaMarket[] = [];
+        for (let offset = 0; offset < 2000; offset += 100) {
+          const res = await fetch(
+            `${GAMMA_API}/markets?closed=false&limit=100&offset=${offset}`,
+            { cache: "no-store", headers: { "Accept": "application/json" } }
+          );
+          if (!res.ok) break;
+          const batch: GammaMarket[] = await res.json();
+          if (batch.length === 0) break;
+          allGeneral = allGeneral.concat(batch);
+          if (batch.length < 100) break;
+        }
+        return allGeneral;
+      } catch {
+        return [];
+      }
+    })();
+    
+    // Fetch events too for better grouping
+    const eventsPromise = (async () => {
+      try {
+        const res = await fetch(
+          `${GAMMA_API}/events?closed=false&limit=500`,
+          { cache: "no-store", headers: { "Accept": "application/json" } }
+        );
+        if (!res.ok) return [];
+        return await res.json();
+      } catch {
+        return [];
+      }
+    })();
+    
+    // Wait for all fetches
+    const [categoryResults, generalMarkets, events] = await Promise.all([
+      Promise.all(categoryPromises),
+      generalPromise,
+      eventsPromise,
+    ]);
+    
+    // Combine all markets and dedupe by ID
+    const allCategoryMarkets = categoryResults.flat();
+    const marketMap = new Map<string, GammaMarket>();
+    
+    // Add general markets first
+    generalMarkets.forEach((m: any) => marketMap.set(m.id, m));
+    // Then category markets (will override with category info)
+    allCategoryMarkets.forEach((m: any) => marketMap.set(m.id, m));
+    
+    const allRawMarkets = Array.from(marketMap.values());
+    console.log(`Fetched ${allRawMarkets.length} unique markets (${generalMarkets.length} general + ${allCategoryMarkets.length} from categories)`);
     const rawMarkets = allRawMarkets;
     
     // Debug: Check how many markets pass each filter
@@ -117,13 +176,50 @@ export async function GET(req: Request) {
         const endDate = m.endDate ? new Date(m.endDate) : null;
         const daysToEnd = endDate ? Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
         
+        // Determine category from tags, groupItemTitle, or fetched category
+        let category = "Other";
+        if (m.fetchedCategory) {
+          category = m.fetchedCategory.charAt(0).toUpperCase() + m.fetchedCategory.slice(1);
+        } else if (m.groupItemTitle) {
+          // Parse category from title (e.g., "NBA", "NFL", "Crypto")
+          const title = m.groupItemTitle.toLowerCase();
+          if (title.includes("nba") || title.includes("nfl") || title.includes("nhl") || title.includes("mlb") || title.includes("soccer") || title.includes("football") || title.includes("super bowl")) {
+            category = "Sports";
+          } else if (title.includes("bitcoin") || title.includes("ethereum") || title.includes("crypto")) {
+            category = "Crypto";
+          } else if (title.includes("trump") || title.includes("biden") || title.includes("election") || title.includes("president")) {
+            category = "Politics";
+          }
+        } else if (m.tags && m.tags.length > 0) {
+          category = m.tags[0].charAt(0).toUpperCase() + m.tags[0].slice(1);
+        }
+        
+        // Also try to infer from question text
+        const q = (m.question || "").toLowerCase();
+        if (category === "Other") {
+          if (q.includes("nba") || q.includes("nfl") || q.includes("nhl") || q.includes("super bowl") || q.includes("world cup") || q.includes("championship")) {
+            category = "Sports";
+          } else if (q.includes("bitcoin") || q.includes("ethereum") || q.includes("btc") || q.includes("eth") || q.includes("crypto")) {
+            category = "Crypto";
+          } else if (q.includes("trump") || q.includes("biden") || q.includes("election") || q.includes("president") || q.includes("congress") || q.includes("fed ")) {
+            category = "Politics";
+          } else if (q.includes("ukraine") || q.includes("russia") || q.includes("china") || q.includes("israel") || q.includes("iran")) {
+            category = "World";
+          } else if (q.includes("ai") || q.includes("gpt") || q.includes("gemini") || q.includes("openai")) {
+            category = "Tech";
+          } else if (q.includes("weather") || q.includes("temperature") || q.includes("climate")) {
+            category = "Science";
+          }
+        }
+        
         return {
           id: m.id,
           slug: m.slug || m.id,
           conditionId: m.conditionId || m.id,
           question: m.question,
+          title: m.question, // Alias for compatibility
           description: m.description?.slice(0, 200) || "",
-          category: m.category || "Other",
+          category,
           yesPrice,
           noPrice,
           volume24h,
@@ -148,49 +244,75 @@ export async function GET(req: Request) {
     // Calculate relative stats for scoring
     const stats = calculateStats(parsedMarkets);
     
-    // Second pass: score markets
+    // Second pass: score markets for REAL money-making opportunities
     const markets = parsedMarkets.map((m: any) => {
-      const { yesPrice, noPrice, volume24h, liquidity, daysToEnd } = m;
+      const { yesPrice, noPrice, volume24h, liquidity, daysToEnd, category, question } = m;
       
-      // ===== TRADEABLE EDGE CALCULATION =====
-      // The "edge" is the potential profit if you're right
-      // Markets in the 20-40¢ range (YES underpriced) or 60-80¢ range (NO underpriced) are interesting
-      // Markets at extreme prices (< 10¢ or > 90¢) have tiny edge potential
+      // ===== SKIP ESSENTIALLY RESOLVED MARKETS =====
+      // Markets at <5% or >95% are done - no opportunity
+      const isResolved = yesPrice < 0.05 || yesPrice > 0.95;
       
-      const distanceFrom50 = Math.abs(yesPrice - 0.5);
+      // ===== VOLUME IS KING =====
+      // High volume = can actually trade, price discovery is real
+      // $100K+ volume = serious opportunity
+      let volumeScore = 0;
+      if (volume24h >= 1000000) volumeScore = 5;      // $1M+ = S-tier volume
+      else if (volume24h >= 500000) volumeScore = 4;   // $500K+
+      else if (volume24h >= 100000) volumeScore = 3;   // $100K+ = tradeable
+      else if (volume24h >= 50000) volumeScore = 2;    // $50K+ = decent
+      else if (volume24h >= 10000) volumeScore = 1;    // $10K+ = minimum
       
-      // Sweet spot: 15-40¢ or 60-85¢ (mispriced but not resolved)
+      // ===== PRICE OPPORTUNITY ZONES =====
+      // Best opportunities: NOT near 0/100, NOT exactly 50/50
+      // Sweet spots: 10-35% (buy YES cheap) or 65-90% (buy NO cheap)
       let edgeScore = 0;
-      if (yesPrice >= 0.15 && yesPrice <= 0.40) {
-        // Potential YES opportunity - cheaper = more upside
-        edgeScore = (0.40 - yesPrice) / 0.25; // 0 to 1 scale
-      } else if (yesPrice >= 0.60 && yesPrice <= 0.85) {
-        // Potential NO opportunity - higher YES = cheaper NO
-        edgeScore = (yesPrice - 0.60) / 0.25; // 0 to 1 scale
-      } else if (yesPrice > 0.40 && yesPrice < 0.60) {
-        // Near 50% - true toss-up, edge comes from information
-        edgeScore = 0.3; // Modest baseline
-      } else {
-        // 5-15¢ or 85-95¢ - very low edge potential
-        edgeScore = 0.1;
+      let edgeDirection = "HOLD";
+      
+      if (!isResolved) {
+        if (yesPrice >= 0.10 && yesPrice <= 0.35) {
+          // Underdog YES - high upside if it hits
+          edgeScore = 2 + (0.35 - yesPrice) * 5; // More edge the cheaper it is
+          edgeDirection = "BUY YES";
+        } else if (yesPrice >= 0.65 && yesPrice <= 0.90) {
+          // Favorite at risk - good NO opportunity
+          edgeScore = 2 + (yesPrice - 0.65) * 5;
+          edgeDirection = "BUY NO";
+        } else if (yesPrice >= 0.35 && yesPrice <= 0.65) {
+          // Toss-up - edge depends on your analysis
+          edgeScore = 1.5;
+          edgeDirection = "ANALYZE";
+        } else {
+          // 5-10% or 90-95% - small edge
+          edgeScore = 0.5;
+          edgeDirection = yesPrice < 0.5 ? "RISKY YES" : "RISKY NO";
+        }
       }
       
-      // ===== VOLUME SCORING (relative to market) =====
-      let volumeScore = 0;
-      if (volume24h >= stats.p90Volume) volumeScore = 3;
-      else if (volume24h >= stats.p75Volume) volumeScore = 2;
-      else if (volume24h >= stats.medianVolume) volumeScore = 1;
+      // ===== CATEGORY BOOST =====
+      // Geopolitics, Politics, Crypto = news-driven = volatile = opportunity
+      let categoryBoost = 0;
+      const hotCategories = ["Politics", "World", "Crypto", "Geopolitics", "Finance"];
+      if (hotCategories.includes(category)) {
+        categoryBoost = 1;
+      }
+      // Extra boost for trending topics
+      const q = (question || "").toLowerCase();
+      const trendingTopics = ["trump", "iran", "venezuela", "ukraine", "bitcoin", "ethereum", "fed", "greenland", "china", "israel"];
+      if (trendingTopics.some(topic => q.includes(topic))) {
+        categoryBoost += 1;
+      }
       
-      // ===== LIQUIDITY SCORING =====
+      // ===== LIQUIDITY CHECK =====
+      // Need liquidity to actually trade
       let liquidityScore = 0;
-      if (liquidity >= stats.p75Liquidity) liquidityScore = 2;
-      else if (liquidity >= stats.medianLiquidity) liquidityScore = 1;
-      else if (liquidity < 1000) liquidityScore = -1; // Penalty for thin markets
+      if (liquidity >= 100000) liquidityScore = 2;
+      else if (liquidity >= 10000) liquidityScore = 1;
+      else if (liquidity < 1000) liquidityScore = -1;
       
-      // ===== DEADLINE SCORING =====
+      // ===== DEADLINE OPPORTUNITY =====
       let deadlineScore = 0;
       let deadlineUrgency = "none";
-      if (daysToEnd !== null) {
+      if (daysToEnd !== null && daysToEnd > 0) {
         if (daysToEnd <= 3) {
           deadlineScore = 2;
           deadlineUrgency = "critical";
@@ -207,42 +329,47 @@ export async function GET(req: Request) {
       }
       
       // ===== COMPOSITE SCORE (0-100) =====
-      // Weight: Edge potential (40%) + Volume (25%) + Liquidity (20%) + Deadline (15%)
-      const compositeScore = Math.round(
-        edgeScore * 40 +           // 0-40 points
-        volumeScore * 8.33 +       // 0-25 points  
-        (liquidityScore + 1) * 6.67 + // 0-20 points (shifted so 0 liquidity = ~7 pts)
-        deadlineScore * 7.5        // 0-15 points
-      );
+      // VOLUME is most important (50%), then edge (25%), category/news (15%), liquidity (10%)
+      let compositeScore = 0;
+      if (!isResolved) {
+        compositeScore = Math.round(
+          volumeScore * 10 +           // 0-50 points (volume is KING)
+          edgeScore * 6 +              // 0-25 points
+          categoryBoost * 7.5 +        // 0-15 points for hot categories
+          (liquidityScore + 1) * 3.33 + // 0-10 points
+          deadlineScore * 2.5          // 0-5 points bonus
+        );
+      }
       
       // ===== TIER ASSIGNMENT =====
       let tier: "S" | "A" | "B" | "C" | "D" = "D";
-      if (compositeScore >= 70 && volumeScore >= 2 && liquidityScore >= 1) tier = "S";
-      else if (compositeScore >= 55 && volumeScore >= 1) tier = "A";
-      else if (compositeScore >= 40) tier = "B";
-      else if (compositeScore >= 25) tier = "C";
+      if (compositeScore >= 60 && volumeScore >= 3) tier = "S";  // High score + high volume
+      else if (compositeScore >= 45 && volumeScore >= 2) tier = "A";
+      else if (compositeScore >= 30 && volumeScore >= 1) tier = "B";
+      else if (compositeScore >= 15) tier = "C";
       
       // ===== PRIMARY SIGNAL DETECTION =====
       let primarySignal: { type: string; direction: string } | null = null;
       
-      // Volume spike: Top 10% volume is notable
-      if (volumeScore >= 3) {
-        primarySignal = { type: "volume-spike", direction: "HIGH ACTIVITY" };
+      // High volume hot market
+      if (volumeScore >= 4 && categoryBoost >= 1) {
+        primarySignal = { type: "hot-market", direction: "HIGH VOLUME + NEWS" };
       }
-      // Deadline catalyst: Approaching deadline with decent edge
-      else if (deadlineScore >= 1.5 && edgeScore >= 0.3) {
-        primarySignal = { type: "deadline-catalyst", direction: deadlineUrgency.toUpperCase() };
+      // Volume spike
+      else if (volumeScore >= 3) {
+        primarySignal = { type: "volume-spike", direction: `$${Math.round(volume24h/1000)}K VOL` };
       }
-      // Mispriced odds: Strong edge signal
-      else if (edgeScore >= 0.6) {
-        primarySignal = { 
-          type: "mispriced-odds", 
-          direction: yesPrice < 0.5 ? "YES UNDERPRICED" : "NO UNDERPRICED" 
-        };
+      // News-driven catalyst
+      else if (categoryBoost >= 2) {
+        primarySignal = { type: "news-catalyst", direction: "TRENDING" };
       }
-      // Liquidity opportunity: Good liquidity with decent setup
-      else if (liquidityScore >= 2 && edgeScore >= 0.4) {
-        primarySignal = { type: "liquidity-opportunity", direction: "DEEP BOOK" };
+      // Deadline opportunity
+      else if (deadlineScore >= 1.5 && !isResolved) {
+        primarySignal = { type: "deadline-play", direction: `${daysToEnd}D LEFT` };
+      }
+      // Mispriced odds
+      else if (edgeScore >= 2.5 && !isResolved) {
+        primarySignal = { type: "mispriced", direction: edgeDirection };
       }
       
       // ===== KELLY CRITERION =====
@@ -252,8 +379,8 @@ export async function GET(req: Request) {
       const impliedEdge = edgeScore * 0.15; // Max ~15% edge assumption
       const kellyFraction = Math.min(impliedEdge * 0.25, 0.10); // Max 10% of bankroll
       
-      // ===== TRADE DIRECTION =====
-      const edgeDirection = yesPrice < 0.5 ? "LONG YES" : "LONG NO";
+      // ===== FINAL TRADE DIRECTION =====
+      const finalEdgeDirection = edgeDirection; // Use the one already calculated
       
       return {
         id: m.id,
@@ -269,7 +396,7 @@ export async function GET(req: Request) {
         endDate: m.endDate?.toISOString() || null,
         daysToEnd,
         edge: edgeScore,
-        edgeDirection,
+        edgeDirection: finalEdgeDirection,
         compositeScore,
         tier,
         primarySignal,
@@ -281,47 +408,68 @@ export async function GET(req: Request) {
       };
     })
     .sort((a, b) => b.compositeScore - a.compositeScore);
+    
+    // Apply category filtering
+    let filteredMarkets = markets;
+    if (excludeCategories.length > 0) {
+      filteredMarkets = filteredMarkets.filter(m => 
+        !excludeCategories.some(cat => m.category.toLowerCase().includes(cat.toLowerCase()))
+      );
+    }
+    if (includeCategories.length > 0) {
+      filteredMarkets = filteredMarkets.filter(m => 
+        includeCategories.some(cat => m.category.toLowerCase().includes(cat.toLowerCase()))
+      );
+    }
 
-    // Stats
+    // Stats (use filtered markets)
     const overallStats = {
-      totalMarkets: markets.length,
-      activeMarkets: markets.length,
-      byDateMarkets: markets.filter((m: any) => m.endDate).length,
-      avgVolume: markets.reduce((s, m) => s + m.volume24h, 0) / (markets.length || 1),
-      avgLiquidity: markets.reduce((s, m) => s + m.liquidity, 0) / (markets.length || 1),
+      totalMarkets: filteredMarkets.length,
+      activeMarkets: filteredMarkets.length,
+      byDateMarkets: filteredMarkets.filter((m: any) => m.endDate).length,
+      avgVolume: filteredMarkets.reduce((s, m) => s + m.volume24h, 0) / (filteredMarkets.length || 1),
+      avgLiquidity: filteredMarkets.reduce((s, m) => s + m.liquidity, 0) / (filteredMarkets.length || 1),
       tierCounts: {
-        S: markets.filter((m: any) => m.tier === "S").length,
-        A: markets.filter((m: any) => m.tier === "A").length,
-        B: markets.filter((m: any) => m.tier === "B").length,
-        C: markets.filter((m: any) => m.tier === "C").length,
-        D: markets.filter((m: any) => m.tier === "D").length,
+        S: filteredMarkets.filter((m: any) => m.tier === "S").length,
+        A: filteredMarkets.filter((m: any) => m.tier === "A").length,
+        B: filteredMarkets.filter((m: any) => m.tier === "B").length,
+        C: filteredMarkets.filter((m: any) => m.tier === "C").length,
+        D: filteredMarkets.filter((m: any) => m.tier === "D").length,
       },
     };
 
-    // Top opportunities (S, A, and B tier with actual signals)
-    const opportunities = markets
-      .filter(m => (m.tier === "S" || m.tier === "A" || m.tier === "B") && m.primarySignal)
+    // Top opportunities - REAL money-making potential
+    // Prioritize: high volume, tradeable price range, hot categories
+    const opportunities = filteredMarkets
+      .filter(m => {
+        // Must have decent volume to actually trade
+        if (m.volume24h < 10000) return false;
+        // Must not be essentially resolved
+        if (m.yesPrice < 0.05 || m.yesPrice > 0.95) return false;
+        // Must have a signal or be high tier
+        return m.tier === "S" || m.tier === "A" || (m.tier === "B" && m.primarySignal);
+      })
       .slice(0, 50);
     
-    // Top movers (highest volume with real activity)
-    const movers = [...markets]
-      .filter(m => m.volume24h > 0)
+    // Top movers (highest volume - these are where the action is)
+    const movers = [...filteredMarkets]
+      .filter(m => m.volume24h > 0 && m.yesPrice >= 0.05 && m.yesPrice <= 0.95) // Not resolved
       .sort((a, b) => b.volume24h - a.volume24h)
       .slice(0, 30)
       .map(m => ({
         ...m,
-        volumeRank: markets.filter(x => x.volume24h > m.volume24h).length + 1,
+        volumeRank: filteredMarkets.filter(x => x.volume24h > m.volume24h).length + 1,
       }));
     
-    // Deadline markets (actually upcoming, not expired)
-    const deadlines = markets
-      .filter(m => m.daysToEnd !== null && m.daysToEnd > 0 && m.daysToEnd <= 90)
+    // Deadline markets (tradeable, not resolved)
+    const deadlines = filteredMarkets
+      .filter(m => m.daysToEnd !== null && m.daysToEnd > 0 && m.daysToEnd <= 90 && m.yesPrice >= 0.05 && m.yesPrice <= 0.95)
       .sort((a, b) => (a.daysToEnd ?? 999) - (b.daysToEnd ?? 999))
       .slice(0, 30);
 
-    // Categories
+    // Categories (use all markets for category counts)
     const categoryCount: Record<string, number> = {};
-    markets.forEach(m => {
+    filteredMarkets.forEach(m => {
       categoryCount[m.category] = (categoryCount[m.category] || 0) + 1;
     });
     const topCategories = Object.entries(categoryCount)
@@ -335,7 +483,8 @@ export async function GET(req: Request) {
       movers,
       deadlines,
       topCategories,
-      markets: markets.slice(0, 500), // Return way more markets
+      markets: filteredMarkets.slice(0, 500), // Return filtered markets
+      allCategories: Object.keys(categoryCount), // Return all available categories for filtering
       fetchedAt: new Date().toISOString(),
     }, {
       headers: {
