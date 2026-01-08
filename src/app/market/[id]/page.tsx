@@ -176,57 +176,57 @@ export default function MarketDetailPage() {
     <div className="min-h-screen bg-[#14151c] text-[#d8d8e0] font-mono">
       {/* Header */}
       <header className="border-b border-[#303040] bg-[#1a1b24]/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="px-4 py-3">
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3">
           <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="text-[#8a8a9a] hover:text-[#c0c0d0] text-xl">←</Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link href="/" className="text-[#8a8a9a] hover:text-[#c0c0d0] text-lg sm:text-xl">←</Link>
               <TierBadge tier={ai.tier} />
-              <span className="text-xs text-[#9a9aaa]">{market.category}</span>
+              <span className="text-[10px] sm:text-xs text-[#9a9aaa] truncate max-w-[80px] sm:max-w-none">{market.category}</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {lastUpdated && (
-                <div className="flex items-center gap-1.5">
+                <div className="hidden sm:flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[10px] text-[#6a6a7a]">
                     {lastUpdated.toLocaleTimeString()}
                   </span>
                 </div>
               )}
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${confidenceBg} ${confidenceColor} border`}>
-                {confidenceLevel} CONFIDENCE
+              <div className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${confidenceBg} ${confidenceColor} border`}>
+                {confidenceLevel}<span className="hidden sm:inline"> CONF</span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-4 space-y-4">
+      <main className="max-w-6xl mx-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#1e1f2a] to-[#252535] border border-[#404055] rounded-2xl p-6">
-          <div className="text-[10px] text-[#818cf8] tracking-widest mb-2">THE OPPORTUNITY</div>
-          <h1 className="text-xl md:text-2xl text-white font-medium leading-relaxed mb-4">{market.title}</h1>
+        <section className="bg-gradient-to-br from-[#1e1f2a] to-[#252535] border border-[#404055] rounded-xl sm:rounded-2xl p-4 sm:p-6">
+          <div className="text-[9px] sm:text-[10px] text-[#818cf8] tracking-widest mb-1 sm:mb-2">THE OPPORTUNITY</div>
+          <h1 className="text-base sm:text-xl md:text-2xl text-white font-medium leading-relaxed mb-3 sm:mb-4">{market.title}</h1>
           
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span className="text-[#7a7a8a]">Score:</span>
               <span className={`font-bold ${ai.compositeScore >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
                 {ai.compositeScore}/100
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#7a7a8a]">Volume:</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-[#7a7a8a]">Vol:</span>
               <span className="text-cyan-400 font-bold">${(market.volume24h / 1000).toFixed(0)}k</span>
               {ai.volumeZScore >= 2 && <span className="text-amber-400 text-xs">🔥</span>}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#7a7a8a]">Liquidity:</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-[#7a7a8a]">Liq:</span>
               <span className="text-white">${(market.liquidity / 1000).toFixed(0)}k</span>
             </div>
             {market.daysToEnd && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <span className="text-[#7a7a8a]">Ends:</span>
                 <span className={market.daysToEnd <= 7 ? 'text-red-400' : 'text-amber-400'}>
-                  {market.daysToEnd} days
+                  {market.daysToEnd}d
                 </span>
               </div>
             )}
@@ -234,34 +234,34 @@ export default function MarketDetailPage() {
         </section>
 
         {/* THE PLAY */}
-        <section className={`rounded-2xl p-6 border-2 ${isLongYes ? 'bg-emerald-500/5 border-emerald-500/40' : 'bg-red-500/5 border-red-500/40'}`}>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🎯</span>
-            <span className="text-xs text-white font-bold tracking-widest">THE PLAY</span>
+        <section className={`rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 ${isLongYes ? 'bg-emerald-500/5 border-emerald-500/40' : 'bg-red-500/5 border-red-500/40'}`}>
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <span className="text-xl sm:text-2xl">🎯</span>
+            <span className="text-[10px] sm:text-xs text-white font-bold tracking-widest">THE PLAY</span>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 sm:gap-6">
             <div className="text-center">
-              <div className="text-[10px] text-[#9a9aaa] mb-2">BUY THIS</div>
-              <div className={`text-5xl font-black ${isLongYes ? 'text-emerald-400' : 'text-red-400'}`}>
+              <div className="text-[8px] sm:text-[10px] text-[#9a9aaa] mb-1 sm:mb-2">BUY THIS</div>
+              <div className={`text-2xl sm:text-5xl font-black ${isLongYes ? 'text-emerald-400' : 'text-red-400'}`}>
                 {targetSide}
               </div>
-              <div className="text-2xl text-white mt-2">@ {entryPriceCents}¢</div>
-              <div className="text-xs text-[#7a7a8a] mt-1">current market price</div>
+              <div className="text-sm sm:text-2xl text-white mt-1 sm:mt-2">@ {entryPriceCents}¢</div>
+              <div className="text-[8px] sm:text-xs text-[#7a7a8a] mt-0.5 sm:mt-1 hidden sm:block">current price</div>
             </div>
             
-            <div className="text-center border-l border-r border-[#303040] px-4">
-              <div className="text-[10px] text-[#9a9aaa] mb-2">IF YOU WIN</div>
-              <div className="text-4xl font-black text-emerald-400">+{roi.toFixed(0)}%</div>
-              <div className="text-lg text-white mt-1">${profit.toFixed(0)} profit</div>
-              <div className="text-xs text-[#7a7a8a] mt-1">on ${betAmount} bet</div>
+            <div className="text-center border-l border-r border-[#303040] px-1 sm:px-4">
+              <div className="text-[8px] sm:text-[10px] text-[#9a9aaa] mb-1 sm:mb-2">IF WIN</div>
+              <div className="text-xl sm:text-4xl font-black text-emerald-400">+{roi.toFixed(0)}%</div>
+              <div className="text-sm sm:text-lg text-white mt-1">${profit.toFixed(0)}</div>
+              <div className="text-[8px] sm:text-xs text-[#7a7a8a] mt-0.5 sm:mt-1 hidden sm:block">profit</div>
             </div>
             
             <div className="text-center">
-              <div className="text-[10px] text-[#9a9aaa] mb-2">IF YOU LOSE</div>
-              <div className="text-4xl font-black text-red-400">-100%</div>
-              <div className="text-lg text-white mt-1">-${betAmount}</div>
-              <div className="text-xs text-[#7a7a8a] mt-1">total loss</div>
+              <div className="text-[8px] sm:text-[10px] text-[#9a9aaa] mb-1 sm:mb-2">IF LOSE</div>
+              <div className="text-xl sm:text-4xl font-black text-red-400">-100%</div>
+              <div className="text-sm sm:text-lg text-white mt-1">-${betAmount}</div>
+              <div className="text-[8px] sm:text-xs text-[#7a7a8a] mt-0.5 sm:mt-1 hidden sm:block">loss</div>
             </div>
           </div>
         </section>
@@ -364,13 +364,13 @@ export default function MarketDetailPage() {
               </div>
               
               <div className="mb-4">
-                <label className="text-xs text-[#8a8a9a] mb-2 block">YOUR BET SIZE</label>
-                <div className="flex gap-2">
+                <label className="text-[10px] sm:text-xs text-[#8a8a9a] mb-2 block">YOUR BET SIZE</label>
+                <div className="grid grid-cols-5 gap-1 sm:gap-2">
                   {[50, 100, 250, 500, 1000].map((amt) => (
                     <button
                       key={amt}
                       onClick={() => setBetAmount(amt)}
-                      className={`flex-1 py-2 text-xs rounded-lg border transition-all ${
+                      className={`py-1.5 sm:py-2 text-[10px] sm:text-xs rounded-lg border transition-all ${
                         betAmount === amt 
                           ? 'bg-[#6366f1] border-[#6366f1] text-white' 
                           : 'bg-[#14151c] border-[#404055] text-[#9a9aaa] hover:border-[#606070]'
@@ -534,9 +534,9 @@ export default function MarketDetailPage() {
           href={`https://polymarket.com/event/${market.slug || market.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full py-4 text-center bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white rounded-xl 
-                   hover:from-[#5558e3] hover:to-[#7c4feb] transition-all text-base font-bold
-                   shadow-lg shadow-[#6366f1]/20"
+          className="block w-full py-3 sm:py-4 text-center bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white rounded-xl 
+                   hover:from-[#5558e3] hover:to-[#7c4feb] transition-all text-sm sm:text-base font-bold
+                   shadow-lg shadow-[#6366f1]/20 active:scale-[0.98]"
         >
           🚀 TRADE ON POLYMARKET →
         </a>

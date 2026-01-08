@@ -91,14 +91,14 @@ export default function OpportunitiesPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-[#b8b8c0] font-mono">
       {/* Header */}
-      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm">
-        <div className="px-6 py-4">
+      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a]">←</Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a] text-lg">←</Link>
               <div>
-                <h1 className="text-lg tracking-wide text-[#e0e0e8]">OPPORTUNITIES</h1>
-                <p className="text-xs text-[#4a4a5a]">
+                <h1 className="text-base sm:text-lg tracking-wide text-[#e0e0e8]">OPPORTUNITIES</h1>
+                <p className="text-[10px] sm:text-xs text-[#4a4a5a] hidden sm:block">
                   multi-signal edge detection · live data
                   {lastFetch && ` · updated ${new Date(lastFetch).toLocaleTimeString()}`}
                 </p>
@@ -107,47 +107,47 @@ export default function OpportunitiesPage() {
             <button
               onClick={fetchData}
               disabled={loading}
-              className="px-3 py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded 
-                       hover:bg-[#1a1a24] disabled:opacity-50"
+              className="px-3 py-1.5 sm:py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded 
+                       hover:bg-[#1a1a24] disabled:opacity-50 active:scale-95"
             >
-              {loading ? '◌' : '↻'} REFRESH
+              {loading ? '◌' : '↻'} <span className="hidden sm:inline">REFRESH</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
-        {/* Stats */}
-        <div className="grid grid-cols-5 gap-3 mb-6">
+      <div className="p-3 sm:p-6">
+        {/* Stats - horizontal scroll on mobile */}
+        <div className="flex gap-2 sm:grid sm:grid-cols-5 sm:gap-3 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0">
           {['S', 'A', 'B', 'C', 'D'].map(tier => (
             <button
               key={tier}
               onClick={() => setTierFilter(tierFilter === tier ? null : tier)}
-              className={`p-3 rounded-lg text-center transition-all ${
+              className={`flex-shrink-0 w-16 sm:w-auto p-2 sm:p-3 rounded-lg text-center transition-all ${
                 tierFilter === tier 
                   ? 'bg-[#1a1a24] border-[#3a3a48]' 
                   : 'bg-[#0c0c10] border-[#1a1a24]'
               } border`}
             >
-              <div className={`text-2xl font-bold ${getTierColor(tier)}`}>
+              <div className={`text-xl sm:text-2xl font-bold ${getTierColor(tier)}`}>
                 {tierCounts[tier] || 0}
               </div>
-              <div className="text-[10px] text-[#4a4a5a]">{tier}-TIER</div>
+              <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">{tier}-TIER</div>
             </button>
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-4 flex-wrap">
+        {/* Filters - horizontal scroll on mobile */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible">
           <FilterPill 
             active={!tierFilter} 
             onClick={() => setTierFilter(null)}
           >
             All Tiers
           </FilterPill>
-          <span className="text-[#2a2a38]">|</span>
+          <span className="text-[#2a2a38] self-center hidden sm:inline">|</span>
           <FilterPill
-            active={signalFilter === 'deadline-catalyst'}
+            active={signalFilter === 'deadline-catalyst'}}
             onClick={() => setSignalFilter(signalFilter === 'deadline-catalyst' ? null : 'deadline-catalyst')}
           >
             ⏰ Deadline
@@ -172,8 +172,8 @@ export default function OpportunitiesPage() {
           </FilterPill>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Main Grid - stacks on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {/* List */}
           <div className="bg-[#0c0c10] border border-[#1a1a24] rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-[#1a1a24]">
@@ -201,29 +201,29 @@ export default function OpportunitiesPage() {
                     <button
                       key={opp.id}
                       onClick={() => setSelected(opp)}
-                      className={`w-full p-3 text-left hover:bg-[#10101a] transition-colors ${
+                      className={`w-full p-2.5 sm:p-3 text-left hover:bg-[#10101a] transition-colors active:bg-[#151520] ${
                         selected?.id === opp.id ? 'bg-[#12121a]' : ''
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#2a2a38] text-sm w-5 pt-0.5">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <span className="text-[#2a2a38] text-xs sm:text-sm w-4 sm:w-5 pt-0.5">
                           {String(i + 1).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
                             <TierBadge tier={opp.tier} />
                             {opp.primarySignal && (
-                              <span className="text-[10px] text-[#5a5a6a]">
+                              <span className="text-[9px] sm:text-[10px] text-[#5a5a6a] truncate">
                                 {opp.primarySignal.type}
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-[#a0a0b0] truncate pr-2">
+                          <div className="text-[11px] sm:text-xs text-[#a0a0b0] truncate pr-2">
                             {opp.title}
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-[10px] text-[#5a5a6a]">
+                          <div className="flex items-center gap-2 sm:gap-3 mt-1 text-[9px] sm:text-[10px] text-[#5a5a6a]">
                             <span>{(opp.yesPrice * 100).toFixed(0)}¢</span>
-                            <span>Score: {opp.compositeScore}</span>
+                            <span className="hidden sm:inline">Score: {opp.compositeScore}</span>
                             {opp.daysToEnd && <span>{opp.daysToEnd}d</span>}
                           </div>
                         </div>
@@ -231,7 +231,7 @@ export default function OpportunitiesPage() {
                           <div className={`text-sm font-bold ${opp.edge >= 0.6 ? 'text-emerald-400' : opp.edge >= 0.4 ? 'text-amber-400' : 'text-[#8a8a9a]'}`}>
                             {(opp.edge * 100).toFixed(0)}
                           </div>
-                          <div className="text-[10px] text-[#4a4a5a]">EDGE</div>
+                          <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">EDGE</div>
                         </div>
                       </div>
                     </button>
@@ -244,34 +244,34 @@ export default function OpportunitiesPage() {
           {/* Detail Panel */}
           <div className="bg-[#0c0c10] border border-[#1a1a24] rounded-lg overflow-hidden">
             {selected ? (
-              <div className="p-4 space-y-4">
+              <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                 {/* Header */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <TierBadge tier={selected.tier} />
-                    <span className="text-xs text-[#5a5a6a]">{selected.category}</span>
+                    <span className="text-[10px] sm:text-xs text-[#5a5a6a]">{selected.category}</span>
                   </div>
-                  <h2 className="text-sm text-[#e0e0e8] leading-relaxed">{selected.title}</h2>
+                  <h2 className="text-xs sm:text-sm text-[#e0e0e8] leading-relaxed">{selected.title}</h2>
                 </div>
 
                 {/* Prices */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#08080a] rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-emerald-400">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div className="bg-[#08080a] rounded-lg p-2.5 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-emerald-400">
                       {(selected.yesPrice * 100).toFixed(0)}¢
                     </div>
-                    <div className="text-[10px] text-[#4a4a5a]">YES PRICE</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">YES PRICE</div>
                   </div>
-                  <div className="bg-[#08080a] rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-red-400">
+                  <div className="bg-[#08080a] rounded-lg p-2.5 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-red-400">
                       {(selected.noPrice * 100).toFixed(0)}¢
                     </div>
-                    <div className="text-[10px] text-[#4a4a5a]">NO PRICE</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">NO PRICE</div>
                   </div>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   <StatBox label="EDGE SCORE" value={`${(selected.edge * 100).toFixed(0)}`} />
                   <StatBox label="TOTAL SCORE" value={selected.compositeScore} />
                   <StatBox label="KELLY %" value={`${(selected.kellyFraction * 100).toFixed(1)}%`} />

@@ -117,62 +117,67 @@ export default function CommandCenter() {
       
       {/* Header */}
       <header className="relative border-b border-[#303040] bg-[#1a1b24]/95 backdrop-blur-sm">
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          {/* Top row - Logo and status */}
           <div className="flex items-center justify-between">
-            <h1 className="text-lg tracking-[0.2em] text-[#ffffff] font-semibold">
+            <h1 className="text-base sm:text-lg tracking-[0.2em] text-[#ffffff] font-semibold">
               POLYLITICS
             </h1>
             
-            <div className="flex items-center gap-5">
-              <span className="text-xs text-[#8a8a9a]">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="hidden sm:block text-xs text-[#8a8a9a]">
                 {lastUpdated?.toLocaleTimeString('en-US', { hour12: false }) || '--:--:--'}
               </span>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-3 py-1.5 text-xs border rounded transition-all
-                         ${excludedCategories.length > 0 
-                           ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' 
-                           : 'bg-[#252530] border-[#404055] text-[#d0d0e0]'}
-                         hover:bg-[#303040] hover:border-[#505065]`}
-              >
-                ◇ FILTERS {excludedCategories.length > 0 && `(${excludedCategories.length})`}
-              </button>
-              <button
-                onClick={fetchLiveData}
-                disabled={loading}
-                className="px-3 py-1.5 text-xs bg-[#252530] border border-[#404055] rounded 
-                         hover:bg-[#303040] hover:border-[#505065] transition-all
-                         disabled:opacity-50 active:scale-95 text-[#d0d0e0]"
-              >
-                {loading ? '◌' : '↻'} REFRESH
-              </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : error ? 'bg-red-400' : 'bg-emerald-400'}`} />
-                <span className={`text-xs font-medium ${loading ? 'text-amber-400' : error ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {loading ? 'SYNCING' : error ? 'ERROR' : 'LIVE'}
+                <span className={`text-[10px] sm:text-xs font-medium ${loading ? 'text-amber-400' : error ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {loading ? 'SYNC' : error ? 'ERR' : 'LIVE'}
                 </span>
               </div>
             </div>
           </div>
           
+          {/* Action buttons row - stacks nicely on mobile */}
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs border rounded transition-all
+                       ${excludedCategories.length > 0 
+                         ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' 
+                         : 'bg-[#252530] border-[#404055] text-[#d0d0e0]'}
+                       hover:bg-[#303040] hover:border-[#505065]`}
+            >
+              ◇ FILTERS {excludedCategories.length > 0 && `(${excludedCategories.length})`}
+            </button>
+            <button
+              onClick={fetchLiveData}
+              disabled={loading}
+              className="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs bg-[#252530] border border-[#404055] rounded 
+                       hover:bg-[#303040] hover:border-[#505065] transition-all
+                       disabled:opacity-50 active:scale-95 text-[#d0d0e0]"
+            >
+              {loading ? '◌' : '↻'} REFRESH
+            </button>
+          </div>
+          
           {/* Filter Panel */}
           {showFilters && (
-            <div className="mt-3 p-4 bg-[#1d1e28] border border-[#404055] rounded-lg">
+            <div className="mt-3 p-3 sm:p-4 bg-[#1d1e28] border border-[#404055] rounded-lg">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-[#8a8a9a] uppercase tracking-wider">Hide Categories</span>
+                <span className="text-[10px] sm:text-xs text-[#8a8a9a] uppercase tracking-wider">Hide Categories</span>
                 <button 
                   onClick={() => setExcludedCategories([])}
-                  className="text-xs text-cyan-400 hover:text-cyan-300"
+                  className="text-[10px] sm:text-xs text-cyan-400 hover:text-cyan-300"
                 >
                   Clear All
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible scrollbar-hide">
                 {["Sports", "NBA", "NFL", "NHL", "Soccer", "Politics", "Crypto", "World", "Tech", "Finance", "Breaking", "Other"].map(cat => (
                   <button
                     key={cat}
                     onClick={() => toggleCategory(cat)}
-                    className={`px-3 py-1.5 text-xs rounded border transition-all ${
+                    className={`flex-shrink-0 px-3 py-1.5 text-xs rounded border transition-all ${
                       excludedCategories.includes(cat)
                         ? 'bg-red-900/30 border-red-600 text-red-400 line-through'
                         : 'bg-[#252530] border-[#404055] text-[#d0d0e0] hover:border-cyan-600'
@@ -182,17 +187,17 @@ export default function CommandCenter() {
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-[#6a6a7a]">
-                Clicked categories will be hidden from results. Sports are hidden by default.
+              <p className="mt-2 sm:mt-3 text-[10px] sm:text-xs text-[#6a6a7a]">
+                Tap to hide categories. Sports hidden by default.
               </p>
             </div>
           )}
         </div>
       </header>
 
-      <main className="relative px-6 py-6 space-y-6">
+      <main className="relative px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Stats Row */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
           <StatCard label="MARKETS" value={data?.stats.activeMarkets ?? 0} />
           <StatCard label="DEADLINES" value={data?.stats.byDateMarkets ?? 0} accent="amber" />
           <StatCard label="S-TIER" value={sTier.length} accent="yellow" glow />
@@ -206,7 +211,7 @@ export default function CommandCenter() {
         </div>
 
         {/* Quick Nav */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
           <NavLink href="/opportunities" icon="◎" label="OPPORTUNITIES" count={data?.opportunities.length} />
           <NavLink href="/movers" icon="△" label="MOVERS" count={data?.movers.length} />
           <NavLink href="/deadlines" icon="◷" label="DEADLINES" count={data?.deadlines.length} />
@@ -302,7 +307,7 @@ export default function CommandCenter() {
         )}
 
         {/* Strategy Guide */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           <StrategyCard
             icon="◷"
             title="DEADLINE DELAY"
@@ -345,13 +350,13 @@ function StatCard({ label, value, accent, glow }: {
   
   return (
     <div className={`
-      bg-[#1e1f2a] border border-[#353545] rounded-lg p-3 text-center
+      bg-[#1e1f2a] border border-[#353545] rounded-lg p-2 sm:p-3 text-center
       ${glow ? 'border-yellow-400/40 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : ''}
     `}>
-      <div className={`text-2xl font-bold ${accent ? accentColors[accent] : 'text-[#ffffff]'}`}>
+      <div className={`text-lg sm:text-2xl font-bold ${accent ? accentColors[accent] : 'text-[#ffffff]'}`}>
         {value}
       </div>
-      <div className="text-[10px] text-[#9a9aaa] tracking-wider mt-1">{label}</div>
+      <div className="text-[8px] sm:text-[10px] text-[#9a9aaa] tracking-wider mt-0.5 sm:mt-1 truncate">{label}</div>
     </div>
   );
 }
@@ -365,16 +370,17 @@ function NavLink({ href, icon, label, count }: {
   return (
     <Link 
       href={href}
-      className="bg-[#1e1f2a] border border-[#353545] rounded-lg p-3
-                 hover:border-[#454560] hover:bg-[#252535] transition-all group"
+      className="bg-[#1e1f2a] border border-[#353545] rounded-lg p-2.5 sm:p-3
+                 hover:border-[#454560] hover:bg-[#252535] transition-all group
+                 active:scale-[0.98]"
     >
       <div className="flex items-center justify-between">
-        <span className="text-lg opacity-60 group-hover:opacity-90">{icon}</span>
+        <span className="text-base sm:text-lg opacity-60 group-hover:opacity-90">{icon}</span>
         {count !== undefined && (
-          <span className="text-xs text-[#a5b4fc] font-medium">{count}</span>
+          <span className="text-[10px] sm:text-xs text-[#a5b4fc] font-medium">{count}</span>
         )}
       </div>
-      <div className="text-xs mt-1 text-[#b0b0c0] group-hover:text-[#e0e0f0]">{label}</div>
+      <div className="text-[10px] sm:text-xs mt-1 text-[#b0b0c0] group-hover:text-[#e0e0f0] truncate">{label}</div>
     </Link>
   );
 }

@@ -193,3 +193,47 @@ input:focus, select:focus {
   box-shadow: var(--shadow-neu-inset), 0 0 0 2px var(--glow-primary);
 }
 
+/* Hide scrollbar for horizontal scroll areas on mobile */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile touch improvements */
+@media (max-width: 640px) {
+  /* Larger touch targets */
+  button, a {
+    min-height: 40px;
+  }
+  
+  /* Better tap highlighting */
+  button:active, a:active {
+    transform: scale(0.98);
+  }
+  
+  /* Prevent text selection on interactive elements */
+  button, a, .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Smoother scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Safe area support for notched phones */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

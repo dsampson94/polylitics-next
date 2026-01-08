@@ -66,36 +66,36 @@ export default function ScannerPage() {
 
   return (
     <div className="min-h-screen bg-[#08080a] text-[#b8b8c0] font-mono">
-      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm">
-        <div className="px-6 py-4">
+      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a]">←</Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a] text-lg">←</Link>
               <div>
-                <h1 className="text-lg tracking-wide text-[#e0e0e8]">SCANNER</h1>
-                <p className="text-xs text-[#4a4a5a]">browse all markets</p>
+                <h1 className="text-base sm:text-lg tracking-wide text-[#e0e0e8]">SCANNER</h1>
+                <p className="text-[10px] sm:text-xs text-[#4a4a5a] hidden sm:block">browse all markets</p>
               </div>
             </div>
             <button
               onClick={fetchData}
               disabled={loading}
-              className="px-3 py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded hover:bg-[#1a1a24] disabled:opacity-50"
+              className="px-3 py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded hover:bg-[#1a1a24] disabled:opacity-50 active:scale-95"
             >
-              {loading ? '◌' : '↻'} REFRESH
+              {loading ? '◌' : '↻'} <span className="hidden sm:inline">REFRESH</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         {/* Search & Sort */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4 sm:mb-6">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search markets..."
-            className="flex-1 px-4 py-2 bg-[#0c0c10] border border-[#1a1a24] rounded-lg text-sm
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-2 bg-[#0c0c10] border border-[#1a1a24] rounded-lg text-sm
                      focus:outline-none focus:border-[#3a3a48] placeholder:text-[#4a4a5a]"
           />
           <div className="flex gap-1">
@@ -103,7 +103,7 @@ export default function ScannerPage() {
               <button
                 key={s}
                 onClick={() => setSortBy(s)}
-                className={`px-3 py-2 text-xs rounded transition-all ${
+                className={`flex-1 sm:flex-none px-3 py-2 text-xs rounded transition-all ${
                   sortBy === s 
                     ? 'bg-[#6366f1]/20 text-[#818cf8] border border-[#6366f1]/30' 
                     : 'bg-[#12121a] text-[#6a6a7a] border border-[#1a1a24]'
@@ -133,14 +133,14 @@ export default function ScannerPage() {
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-[#4a4a5a] text-sm">no markets found</div>
           ) : (
-            <div className="divide-y divide-[#1a1a24] max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-[#1a1a24] max-h-[65vh] sm:max-h-[600px] overflow-y-auto">
               {filtered.map((market, i) => (
                 <Link
                   key={market.id}
                   href={`/market/${market.id}`}
-                  className="flex items-center gap-4 p-4 hover:bg-[#10101a] transition-colors"
+                  className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 hover:bg-[#10101a] transition-colors active:bg-[#151520]"
                 >
-                  <span className="text-[#2a2a38] text-xs w-6">
+                  <span className="text-[#2a2a38] text-[10px] sm:text-xs w-5 sm:w-6">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   
@@ -148,34 +148,32 @@ export default function ScannerPage() {
                   <TierBadge tier={market.tier} />
                   
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-[#a0a0b0] truncate">{market.title}</div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px] text-[#5a5a6a]">
-                      <span>{market.category}</span>
+                    <div className="text-xs sm:text-sm text-[#a0a0b0] truncate">{market.title}</div>
+                    <div className="flex items-center gap-2 sm:gap-3 mt-1 text-[9px] sm:text-[10px] text-[#5a5a6a]">
+                      <span className="truncate max-w-[60px] sm:max-w-none">{market.category}</span>
                       {market.daysToEnd && (
-                        <>
-                          <span className="text-[#3a3a48]">|</span>
-                          <span className={market.daysToEnd <= 7 ? 'text-red-400' : 'text-amber-400'}>
-                            {market.daysToEnd}d
-                          </span>
-                        </>
+                        <span className={market.daysToEnd <= 7 ? 'text-red-400' : 'text-amber-400'}>
+                          {market.daysToEnd}d
+                        </span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4 text-right text-xs">
-                    <div>
+                  {/* Mobile: simplified stats - Desktop: full grid */}
+                  <div className="flex sm:grid sm:grid-cols-3 gap-2 sm:gap-4 text-right text-xs flex-shrink-0">
+                    <div className="hidden sm:block">
                       <div className="text-[#a0a0b0]">{(market.yesPrice * 100).toFixed(0)}¢</div>
                       <div className="text-[8px] text-[#4a4a5a]">PRICE</div>
                     </div>
                     <div>
-                      <div className="text-cyan-400">${(market.volume24h / 1000).toFixed(0)}k</div>
-                      <div className="text-[8px] text-[#4a4a5a]">VOL</div>
+                      <div className="text-cyan-400 text-xs sm:text-sm">${(market.volume24h / 1000).toFixed(0)}k</div>
+                      <div className="text-[8px] text-[#4a4a5a] hidden sm:block">VOL</div>
                     </div>
                     <div>
-                      <div className={market.edge > 0.3 ? 'text-emerald-400' : 'text-[#8a8a9a]'}>
+                      <div className={`text-xs sm:text-sm ${market.edge > 0.3 ? 'text-emerald-400' : 'text-[#8a8a9a]'}`}>
                         {(market.edge * 100).toFixed(0)}%
                       </div>
-                      <div className="text-[8px] text-[#4a4a5a]">EDGE</div>
+                      <div className="text-[8px] text-[#4a4a5a] hidden sm:block">EDGE</div>
                     </div>
                   </div>
                 </Link>

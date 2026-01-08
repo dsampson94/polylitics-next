@@ -69,41 +69,41 @@ export default function DeadlinesPage() {
 
   return (
     <div className="min-h-screen bg-[#08080a] text-[#b8b8c0] font-mono">
-      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm">
-        <div className="px-6 py-4">
+      <header className="border-b border-[#1a1a24] bg-[#0a0a0e]/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a]">←</Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link href="/" className="text-[#4a4a5a] hover:text-[#8a8a9a] text-lg">←</Link>
               <div>
-                <h1 className="text-lg tracking-wide text-[#e0e0e8]">DEADLINES</h1>
-                <p className="text-xs text-[#4a4a5a]">delay risk analysis</p>
+                <h1 className="text-base sm:text-lg tracking-wide text-[#e0e0e8]">DEADLINES</h1>
+                <p className="text-[10px] sm:text-xs text-[#4a4a5a] hidden sm:block">delay risk analysis</p>
               </div>
             </div>
             <button
               onClick={fetchData}
               disabled={loading}
-              className="px-3 py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded hover:bg-[#1a1a24] disabled:opacity-50"
+              className="px-3 py-1.5 text-xs bg-[#12121a] border border-[#2a2a38] rounded hover:bg-[#1a1a24] disabled:opacity-50 active:scale-95"
             >
-              {loading ? '◌' : '↻'} REFRESH
+              {loading ? '◌' : '↻'} <span className="hidden sm:inline">REFRESH</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-[#0c0c10] border border-red-500/30 rounded-lg p-4 text-center shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-            <div className="text-2xl font-bold text-red-400">{urgent.length}</div>
-            <div className="text-[10px] text-[#4a4a5a]">≤7 DAYS</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="bg-[#0c0c10] border border-red-500/30 rounded-lg p-2.5 sm:p-4 text-center shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+            <div className="text-xl sm:text-2xl font-bold text-red-400">{urgent.length}</div>
+            <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">≤7 DAYS</div>
           </div>
-          <div className="bg-[#0c0c10] border border-amber-500/30 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-amber-400">{soon.length}</div>
-            <div className="text-[10px] text-[#4a4a5a]">8-30 DAYS</div>
+          <div className="bg-[#0c0c10] border border-amber-500/30 rounded-lg p-2.5 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-amber-400">{soon.length}</div>
+            <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">8-30 DAYS</div>
           </div>
-          <div className="bg-[#0c0c10] border border-[#1a1a24] rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-[#e0e0e8]">{allMarkets.length}</div>
-            <div className="text-[10px] text-[#4a4a5a]">TOTAL</div>
+          <div className="bg-[#0c0c10] border border-[#1a1a24] rounded-lg p-2.5 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-[#e0e0e8]">{allMarkets.length}</div>
+            <div className="text-[9px] sm:text-[10px] text-[#4a4a5a]">TOTAL</div>
           </div>
         </div>
 
@@ -150,11 +150,11 @@ export default function DeadlinesPage() {
                   <Link
                     key={market.id}
                     href={`/market/${market.id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-[#10101a] transition-colors"
+                    className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 hover:bg-[#10101a] transition-colors active:bg-[#151520]"
                   >
                     {/* Days Badge */}
                     <div className={`
-                      w-14 h-14 rounded-lg flex flex-col items-center justify-center
+                      w-11 h-11 sm:w-14 sm:h-14 rounded-lg flex flex-col items-center justify-center flex-shrink-0
                       ${isUrgent 
                         ? 'bg-red-500/10 border border-red-500/30' 
                         : isSoon 
@@ -162,36 +162,36 @@ export default function DeadlinesPage() {
                           : 'bg-[#1a1a24] border border-[#2a2a38]'
                       }
                     `}>
-                      <div className={`text-xl font-bold ${
+                      <div className={`text-lg sm:text-xl font-bold ${
                         isUrgent ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-[#8a8a9a]'
                       }`}>
                         {days}
                       </div>
-                      <div className="text-[8px] text-[#5a5a6a]">DAYS</div>
+                      <div className="text-[7px] sm:text-[8px] text-[#5a5a6a]">DAYS</div>
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[#a0a0b0] truncate">{market.title}</div>
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-[#5a5a6a]">
-                        <span>{market.category}</span>
-                        <span className="text-[#3a3a48]">|</span>
-                        <span>Edge: {(market.edge * 100).toFixed(0)}%</span>
+                      <div className="text-xs sm:text-sm text-[#a0a0b0] truncate">{market.title}</div>
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 text-[9px] sm:text-[10px] text-[#5a5a6a]">
+                        <span className="truncate max-w-[60px] sm:max-w-none">{market.category}</span>
+                        <span className="hidden sm:inline">|</span>
+                        <span className="hidden sm:inline">Edge: {(market.edge * 100).toFixed(0)}%</span>
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-emerald-500/10 px-2 py-1 rounded text-center">
+                    <div className="text-right flex-shrink-0">
+                      <div className="flex gap-1 sm:grid sm:grid-cols-2 sm:gap-2 text-[10px] sm:text-xs">
+                        <div className="bg-emerald-500/10 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
                           <div className="text-emerald-400 font-bold">
                             {(market.yesPrice * 100).toFixed(0)}¢
                           </div>
-                          <div className="text-[8px] text-[#5a5a6a]">YES</div>
+                          <div className="text-[7px] sm:text-[8px] text-[#5a5a6a] hidden sm:block">YES</div>
                         </div>
-                        <div className="bg-red-500/10 px-2 py-1 rounded text-center">
+                        <div className="bg-red-500/10 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
                           <div className="text-red-400 font-bold">
                             {(market.noPrice * 100).toFixed(0)}¢
                           </div>
-                          <div className="text-[8px] text-[#5a5a6a]">NO</div>
+                          <div className="text-[7px] sm:text-[8px] text-[#5a5a6a] hidden sm:block">NO</div>
                         </div>
                       </div>
                     </div>
@@ -203,15 +203,15 @@ export default function DeadlinesPage() {
         </div>
 
         {/* Strategy Tip */}
-        <div className="mt-6 bg-[#0c0c10] border border-emerald-500/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="mt-4 sm:mt-6 bg-[#0c0c10] border border-emerald-500/20 rounded-lg p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
             <span className="text-emerald-400">◷</span>
-            <span className="text-xs text-[#8a8a9a]">DEADLINE DELAY STRATEGY</span>
+            <span className="text-[10px] sm:text-xs text-[#8a8a9a]">DEADLINE DELAY STRATEGY</span>
           </div>
-          <p className="text-xs text-[#5a5a6a] leading-relaxed">
-            Markets with tight deadlines often overprice the probability of resolution. 
-            If procedural steps remain or there&apos;s bureaucratic uncertainty, consider 
-            fading the market (betting NO on high-yes or YES on high-no markets).
+          <p className="text-[10px] sm:text-xs text-[#5a5a6a] leading-relaxed">
+            Markets with tight deadlines often overprice resolution probability. 
+            <span className="hidden sm:inline"> If procedural steps remain or there&apos;s bureaucratic uncertainty, consider 
+            fading the market (betting NO on high-yes or YES on high-no markets).</span>
           </p>
         </div>
       </div>
