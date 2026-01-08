@@ -147,7 +147,7 @@ export default function OpportunitiesPage() {
           </FilterPill>
           <span className="text-[#2a2a38] self-center hidden sm:inline">|</span>
           <FilterPill
-            active={signalFilter === 'deadline-catalyst'}}
+            active={signalFilter === 'deadline-catalyst'}
             onClick={() => setSignalFilter(signalFilter === 'deadline-catalyst' ? null : 'deadline-catalyst')}
           >
             ⏰ Deadline
